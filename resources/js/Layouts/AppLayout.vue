@@ -38,7 +38,7 @@ const flash = computed(() => page.props.flash?.message);
                         :key="item.href"
                         :href="item.href"
                         class="eyebrow relative py-1 transition-colors"
-                        :style="{ color: isActive(item.href) ? 'var(--color-ink)' : 'var(--color-stone)' }"
+                        :style="{ color: isActive(item.href) ? 'var(--color-klein-deep)' : 'var(--color-stone)' }"
                     >
                         {{ item.label }}
                         <span

@@ -92,6 +92,22 @@ class TalentController extends Controller
     }
 
     /**
+     * Met à jour l'identité d'un talent (prénom, nom, localisation).
+     */
+    public function updateIdentity(Request $request, Talent $talent): RedirectResponse
+    {
+        $validated = $request->validate([
+            'first_name' => ['nullable', 'string', 'max:64'],
+            'last_name' => ['nullable', 'string', 'max:64'],
+            'location' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $talent->update($validated);
+
+        return back()->with('flash', ['message' => 'Identité enregistrée.']);
+    }
+
+    /**
      * Supprime un talent : fichiers + cascade base.
      */
     public function destroy(Talent $talent): RedirectResponse
@@ -132,6 +148,9 @@ class TalentController extends Controller
             'talent' => [
                 'id' => $talent->id,
                 'code' => $talent->code,
+                'first_name' => $talent->first_name,
+                'last_name' => $talent->last_name,
+                'location' => $talent->location,
                 'photo_url' => $talent->displayPhotoUrl(),
                 'is_gold' => $talent->is_gold,
                 'photos' => $talent->photos

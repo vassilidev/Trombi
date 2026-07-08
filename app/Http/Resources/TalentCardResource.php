@@ -21,6 +21,8 @@ class TalentCardResource extends JsonResource
         return [
             'id' => $this->id,
             'code' => $this->code,
+            'name' => $this->displayName(),
+            'location' => $this->location,
             'source' => $this->source,
             'is_gold' => $this->is_gold,
             'photo_url' => $this->displayPhotoUrl(),

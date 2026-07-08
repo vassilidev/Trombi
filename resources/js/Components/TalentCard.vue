@@ -32,7 +32,7 @@ defineProps({
             <span
                 v-if="talent.photos_count > 1"
                 class="absolute left-2 top-2 font-mono text-[10px] font-bold"
-                style="background: rgba(23, 21, 15, 0.75); color: var(--color-paper); padding: 0 0.3rem; border-radius: 2px"
+                style="background: rgba(9, 11, 32, 0.8); color: var(--color-ink); padding: 0 0.3rem; border-radius: 2px"
                 >×{{ talent.photos_count }}</span
             >
         </div>
@@ -41,8 +41,15 @@ defineProps({
             class="flex items-center justify-between gap-2 border-t px-2.5 py-1.5"
             style="border-color: var(--color-line)"
         >
-            <span class="font-mono text-[11px]" style="color: var(--color-stone)">{{ talent.code }}</span>
-            <div class="flex items-center gap-1">
+            <span class="min-w-0">
+                <span v-if="talent.name" class="block truncate text-xs font-semibold" style="color: var(--color-ink)">
+                    {{ talent.name }}
+                </span>
+                <span class="block truncate font-mono text-[11px]" style="color: var(--color-stone)">
+                    {{ talent.location || talent.code }}
+                </span>
+            </span>
+            <div class="flex shrink-0 items-center gap-1">
                 <span
                     v-if="talent.is_gold"
                     class="tag"

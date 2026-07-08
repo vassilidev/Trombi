@@ -44,6 +44,30 @@ it('deletes a photo and promotes another as primary', function () {
         ->and($talent->photos()->where('is_primary', true)->count())->toBe(1);
 });
 
+it('deletes the last remaining photo of a talent', function () {
+    $talent = talentWithImage();
+    $only = $talent->photos()->first();
+
+    $this->delete("/talents/{$talent->id}/photos/{$only->id}")->assertRedirect();
+
+    expect($talent->photos()->count())->toBe(0);
+});
+
+it('updates a talent identity', function () {
+    $talent = talentWithImage();
+
+    $this->patch("/talents/{$talent->id}/identity", [
+        'first_name' => 'Camille',
+        'last_name' => 'Renard',
+        'location' => 'Lyon, France',
+    ])->assertRedirect();
+
+    expect($talent->fresh())
+        ->first_name->toBe('Camille')
+        ->last_name->toBe('Renard')
+        ->location->toBe('Lyon, France');
+});
+
 it('deletes a talent and cascades its data', function () {
     $talent = talentWithImage();
     $this->post("/talents/{$talent->id}/qualify", ['genre' => 'femme']);

@@ -28,7 +28,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
             <div
                 v-if="open"
                 class="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style="background: rgba(23, 21, 15, 0.35)"
+                style="background: rgba(6, 8, 24, 0.72); backdrop-filter: blur(2px)"
                 @mousedown.self="emit('close')"
             >
                 <transition
@@ -38,7 +38,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                     <div
                         v-if="open"
                         class="card w-full max-w-md overflow-hidden"
-                        style="box-shadow: 0 24px 60px -20px rgba(23, 21, 15, 0.35)"
+                        style="box-shadow: 0 24px 60px -20px rgba(4, 6, 20, 0.75)"
                     >
                         <div
                             class="flex items-start justify-between gap-4 border-b px-5 py-4"

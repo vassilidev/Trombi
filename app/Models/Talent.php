@@ -20,6 +20,9 @@ class Talent extends Model
 
     protected $fillable = [
         'code',
+        'first_name',
+        'last_name',
+        'location',
         'source',
         'is_gold',
         'is_active',
@@ -90,6 +93,16 @@ class Talent extends Model
     public function scopePendingAnalysis(Builder $query): void
     {
         $query->whereDoesntHave('profile');
+    }
+
+    /**
+     * Nom affichable (« Prénom Nom ») si renseigné, sinon null.
+     */
+    public function displayName(): ?string
+    {
+        $name = trim("{$this->first_name} {$this->last_name}");
+
+        return $name === '' ? null : $name;
     }
 
     /**

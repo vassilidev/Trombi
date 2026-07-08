@@ -12,22 +12,24 @@
     --font-serif: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
     --font-mono: 'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
 
-    --color-paper: #f7f6f3;
-    --color-paper-deep: #efede6;
-    --color-card: #fffffe;
-    --color-ink: #17150f;
-    --color-stone: #78736a;
-    --color-stone-soft: #a8a397;
-    --color-line: #e4e1d8;
-    --color-line-strong: #d4d0c4;
+    /* Palette sombre high-tech (indigo profond) — unifiée avec la landing. */
+    --color-paper: #14173a;
+    --color-paper-deep: #0f1230;
+    --color-card: #1b2048;
+    --color-ink: #f0eee7;
+    /* Textes secondaires : remontés pour rester lisibles sur fond sombre (AA). */
+    --color-stone: #aab0d6;
+    --color-stone-soft: #8990bf;
+    --color-line: #2f3568;
+    --color-line-strong: #434a86;
 
-    --color-klein: #1e2bd1;
-    --color-klein-deep: #131c8c;
-    --color-klein-wash: #ecedfb;
+    --color-klein: #6d78ff;
+    --color-klein-deep: #aab0ff;
+    --color-klein-wash: #232a5e;
 
-    --color-pine: #2e6e4e;
-    --color-rust: #b23a2e;
-    --color-flag: #a9711a;
+    --color-pine: #5fd3a4;
+    --color-rust: #ff8f78;
+    --color-flag: #e6b45c;
 
     --radius-frame: 3px;
 }
@@ -35,6 +37,10 @@
 @layer base {
     body {
         background-color: var(--color-paper);
+        /* Halo indigo discret en haut : prolonge l'atmosphère de la landing sur toutes les pages. */
+        background-image: radial-gradient(120% 60% at 50% -10%, rgba(80, 96, 255, 0.14), transparent 60%);
+        background-repeat: no-repeat;
+        background-attachment: fixed;
         color: var(--color-ink);
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
@@ -49,6 +55,11 @@
     :focus-visible {
         outline: 2px solid var(--color-klein);
         outline-offset: 2px;
+    }
+
+    input[type='checkbox'],
+    input[type='radio'] {
+        accent-color: var(--color-klein);
     }
 }
 
@@ -71,11 +82,21 @@
         line-height: 1.02;
     }
 
-    /* Surface carte : filet fin, pas d'ombre — flat & éditorial. */
+    /* Surface carte : filet fin + micro-relief (lumière haute + ombre portée douce). */
     .card {
-        background: var(--color-card);
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 96px),
+            var(--color-card);
         border: 1px solid var(--color-line);
         border-radius: var(--radius-frame);
+        box-shadow:
+            0 1px 2px rgba(4, 6, 20, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    /* Filet de section : le séparateur label + contenu (utilisé partout). */
+    .rule {
+        border-top: 1px solid var(--color-line);
     }
 
     /* Boutons. */
@@ -134,13 +155,16 @@
     /* Champs de formulaire. */
     .field {
         width: 100%;
-        background: #fff;
+        /* Puits sombre : l'input se détache des cartes au lieu de s'y fondre. */
+        background: var(--color-paper-deep);
         border: 1px solid var(--color-line-strong);
         border-radius: var(--radius-frame);
         padding: 0.55rem 0.75rem;
         font-size: 0.875rem;
         color: var(--color-ink);
-        transition: border-color 0.15s ease;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
     }
     .field::placeholder {
         color: var(--color-stone-soft);
@@ -148,6 +172,7 @@
     .field:focus {
         outline: none;
         border-color: var(--color-klein);
+        box-shadow: 0 0 0 3px rgba(109, 120, 255, 0.18);
     }
 
     /* Puce / tag mono. */
@@ -157,6 +182,141 @@
         letter-spacing: 0.02em;
         padding: 0.15rem 0.45rem;
         border-radius: 2px;
+    }
+
+    /* --- Landing high-tech : HUD de vision par ordinateur --- */
+    .hero-dark {
+        background:
+            radial-gradient(120% 90% at 80% 0%, rgba(80, 96, 255, 0.35), transparent 55%),
+            radial-gradient(90% 70% at 0% 100%, rgba(80, 96, 255, 0.2), transparent 50%),
+            #1b2150;
+    }
+
+    /* Nom de l'app en ASCII art binaire (footer landing) : champ de 0/1 masqué. */
+    .ascii-art {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        line-height: 13px;
+        letter-spacing: 3px;
+        white-space: pre;
+        overflow: hidden;
+        height: 150px;
+        color: #8b93ff;
+        opacity: 0.85;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-position: center;
+        mask-position: center;
+    }
+    .hero-grid {
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(circle at 50% 40%, #000 40%, transparent 78%);
+    }
+
+    .scanline {
+        animation: scan-sweep 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes scan-sweep {
+        0% {
+            transform: translateY(0%);
+            opacity: 0;
+        }
+        8% {
+            opacity: 1;
+        }
+        92% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(1000%);
+            opacity: 0;
+        }
+    }
+
+    .hud-in {
+        opacity: 0;
+        animation: hud-in 0.55s ease-out forwards;
+    }
+    @keyframes hud-in {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .pulse-dot {
+        animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+        0%,
+        100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(64, 80, 255, 0.6);
+        }
+        50% {
+            opacity: 0.6;
+            box-shadow: 0 0 0 6px rgba(64, 80, 255, 0);
+        }
+    }
+
+    /* Bandeau défilant de vocabulaire. */
+    .marquee-mask {
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    }
+    .marquee-track {
+        display: flex;
+        width: max-content;
+        will-change: transform;
+    }
+    .marquee-l {
+        animation: marquee-l linear infinite;
+    }
+    .marquee-r {
+        animation: marquee-r linear infinite;
+    }
+    @keyframes marquee-l {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(-50%);
+        }
+    }
+    @keyframes marquee-r {
+        from {
+            transform: translateX(-50%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .scanline {
+            animation: none;
+            opacity: 0;
+        }
+        .hud-in {
+            animation: none;
+            opacity: 1;
+        }
+        .pulse-dot {
+            animation: none;
+        }
+        .marquee-l,
+        .marquee-r {
+            animation: none;
+        }
     }
 
     /* Bloc JSON mis en couleur (démo « magie » de la landing). */
@@ -177,6 +337,19 @@
     .json-block .jn {
         color: var(--color-rust);
     }
+    /* Variante sur fond sombre (landing). */
+    .hero-dark .json-block {
+        color: rgba(244, 242, 236, 0.55);
+    }
+    .hero-dark .json-block .jk {
+        color: #8b93ff;
+    }
+    .hero-dark .json-block .js {
+        color: #63d2a4;
+    }
+    .hero-dark .json-block .jn {
+        color: #ff9078;
+    }
 
     /* Chip togglable (multi-select). */
     .chip {
@@ -185,7 +358,7 @@
         padding: 0.3rem 0.7rem;
         border-radius: 999px;
         border: 1px solid var(--color-line-strong);
-        background: #fff;
+        background: var(--color-card);
         color: var(--color-stone);
         cursor: pointer;
         transition:

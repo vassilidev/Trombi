@@ -19,6 +19,7 @@ Route::post('/talents/analyze-pending', [TalentController::class, 'analyzePendin
 Route::get('/talents/{talent}/qualify', [TalentController::class, 'qualify'])->name('talents.qualify');
 Route::post('/talents/{talent}/qualify', [TalentController::class, 'storeQualification'])->name('talents.qualify.store');
 Route::post('/talents/{talent}/analyze', [TalentController::class, 'analyze'])->name('talents.analyze');
+Route::patch('/talents/{talent}/identity', [TalentController::class, 'updateIdentity'])->name('talents.identity.update');
 Route::post('/talents/{talent}/photos', [TalentController::class, 'addPhotos'])->name('talents.photos.add');
 Route::delete('/talents/{talent}/photos/{photo}', [TalentController::class, 'destroyPhoto'])->name('talents.photos.destroy');
 Route::delete('/talents/{talent}', [TalentController::class, 'destroy'])->name('talents.destroy');

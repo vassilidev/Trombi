@@ -56,7 +56,7 @@ function setFilter(key) {
                     v-for="f in filters"
                     :key="f.key"
                     class="eyebrow relative py-1 transition-colors"
-                    :style="{ color: filter === f.key ? 'var(--color-ink)' : 'var(--color-stone)' }"
+                    :style="{ color: filter === f.key ? 'var(--color-klein-deep)' : 'var(--color-stone)' }"
                     @click="setFilter(f.key)"
                 >
                     {{ f.label }}
@@ -94,7 +94,7 @@ function setFilter(key) {
                 class="px-3 py-1.5 font-mono text-xs transition-colors"
                 :style="{
                     color: link.active ? '#fff' : 'var(--color-stone)',
-                    background: link.active ? 'var(--color-ink)' : 'transparent',
+                    background: link.active ? 'var(--color-klein)' : 'transparent',
                     borderRadius: '2px',
                     pointerEvents: link.url ? 'auto' : 'none',
                     opacity: link.url ? 1 : 0.4,

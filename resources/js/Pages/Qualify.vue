@@ -4,7 +4,7 @@ import SearchableSelect from '@/Components/SearchableSelect.vue';
 import MultiChips from '@/Components/MultiChips.vue';
 import HelpTip from '@/Components/HelpTip.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
     talent: { type: Object, required: true },
@@ -30,8 +30,23 @@ function addPhotos(fileList) {
 }
 
 function deletePhoto(photoId) {
-    if (!confirm('Supprimer cette photo ?')) return;
+    const isLast = (props.talent.photos?.length ?? 0) <= 1;
+    const message = isLast
+        ? 'C’est la dernière photo de ce talent. La supprimer le laissera sans image. Continuer ?'
+        : 'Supprimer cette photo ?';
+    if (!confirm(message)) return;
     router.delete(`/talents/${props.talent.id}/photos/${photoId}`, { preserveScroll: true });
+}
+
+// --- Identité (prénom, nom, localisation) ---
+const identityForm = useForm({
+    first_name: props.talent.first_name ?? '',
+    last_name: props.talent.last_name ?? '',
+    location: props.talent.location ?? '',
+});
+
+function saveIdentity() {
+    identityForm.patch(`/talents/${props.talent.id}/identity`, { preserveScroll: true });
 }
 
 function deleteTalent() {
@@ -59,8 +74,18 @@ function initialForm() {
 const form = useForm(initialForm());
 
 // --- Galerie photos (un talent peut en avoir plusieurs) ---
-const photos = props.talent.photos ?? [];
-const mainPhoto = ref(photos[0]?.url ?? props.talent.photo_url);
+const mainPhoto = ref(props.talent.photos?.[0]?.url ?? props.talent.photo_url);
+
+// Après ajout/suppression, garde une photo principale valide.
+watch(
+    () => props.talent.photos,
+    (list) => {
+        const urls = (list ?? []).map((p) => p.url);
+        if (!urls.includes(mainPhoto.value)) {
+            mainPhoto.value = urls[0] ?? null;
+        }
+    },
+);
 
 // --- Analyse IA + comparaison ---
 const fewShot = ref(false);
@@ -152,8 +177,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                         class="flex items-center justify-between border-t px-3 py-2"
                         style="border-color: var(--color-line)"
                     >
-                        <span class="font-mono text-xs" style="color: var(--color-stone)">{{ talent.code }}</span>
-                        <span v-if="talent.is_gold" class="inline-flex items-center gap-1">
+                        <span class="min-w-0">
+                            <span v-if="talent.first_name || talent.last_name" class="block truncate text-xs font-semibold" style="color: var(--color-ink)">
+                                {{ [talent.first_name, talent.last_name].filter(Boolean).join(' ') }}
+                            </span>
+                            <span class="block truncate font-mono text-xs" style="color: var(--color-stone)">
+                                {{ talent.location || talent.code }}
+                            </span>
+                        </span>
+                        <span v-if="talent.is_gold" class="inline-flex shrink-0 items-center gap-1">
                             <span class="tag" style="background: var(--color-ink); color: var(--color-paper)">
                                 validé
                             </span>
@@ -182,12 +214,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                             <img :src="p.url" class="size-full object-cover" />
                         </button>
                         <button
-                            v-if="talent.photos.length > 1"
                             type="button"
-                            class="absolute -right-1.5 -top-1.5 grid size-4 place-items-center rounded-full text-[9px] leading-none opacity-0 transition-opacity group-hover/photo:opacity-100"
+                            class="absolute -right-1.5 -top-1.5 grid size-4 place-items-center rounded-full text-[9px] leading-none shadow-sm transition-transform hover:scale-110"
                             style="background: var(--color-rust); color: #fff"
                             title="Supprimer cette photo"
-                            @click="deletePhoto(p.id)"
+                            @click.stop="deletePhoto(p.id)"
                         >
                             ✕
                         </button>
@@ -201,6 +232,39 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                         <input type="file" class="hidden" multiple accept="image/*" @change="addPhotos($event.target.files)" />
                         +
                     </label>
+                </div>
+
+                <!-- Identité -->
+                <div class="card mt-4 p-4">
+                    <div class="mb-3 flex items-center gap-1.5">
+                        <span class="eyebrow" style="color: var(--color-ink)">Identité</span>
+                        <HelpTip
+                            title="Identité"
+                            detail="Le prénom, le nom et la localisation qu'on attribue à ce profil. Purement descriptif : ces champs n'entrent pas dans l'analyse IA ni dans le portrait-robot."
+                            eyebrow="Fiche"
+                        />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="block">
+                            <span class="eyebrow mb-1 block">Prénom</span>
+                            <input v-model="identityForm.first_name" type="text" class="field" placeholder="Prénom" />
+                        </label>
+                        <label class="block">
+                            <span class="eyebrow mb-1 block">Nom</span>
+                            <input v-model="identityForm.last_name" type="text" class="field" placeholder="Nom" />
+                        </label>
+                    </div>
+                    <label class="mt-3 block">
+                        <span class="eyebrow mb-1 block">Localisation</span>
+                        <input v-model="identityForm.location" type="text" class="field" placeholder="Ville, pays…" />
+                    </label>
+                    <button
+                        class="btn btn-ghost mt-3 w-full"
+                        :disabled="identityForm.processing"
+                        @click="saveIdentity"
+                    >
+                        {{ identityForm.processing ? 'Enregistrement…' : 'Enregistrer l’identité' }}
+                    </button>
                 </div>
 
                 <!-- Comparaison IA -->
@@ -399,7 +463,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                     <ul
                         v-if="searchOpen && suggestions.length"
                         class="card absolute z-30 mt-1 w-full overflow-hidden"
-                        style="box-shadow: 0 16px 40px -18px rgba(23, 21, 15, 0.3)"
+                        style="box-shadow: 0 18px 44px -18px rgba(4, 6, 20, 0.7)"
                     >
                         <li v-for="s in suggestions" :key="`${s.attr}-${s.value}`">
                             <button

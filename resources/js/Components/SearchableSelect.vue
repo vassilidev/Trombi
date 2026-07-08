@@ -49,7 +49,7 @@ function clear() {
         <button
             type="button"
             class="flex w-full items-center justify-between gap-2 border px-3 py-2 text-left text-sm transition-colors"
-            style="border-color: var(--color-line-strong); background: #fff; border-radius: var(--radius-frame)"
+            style="border-color: var(--color-line-strong); background: var(--color-card); border-radius: var(--radius-frame)"
             :style="{ color: modelValue ? 'var(--color-ink)' : 'var(--color-stone-soft)' }"
             @click="toggle"
         >
@@ -70,7 +70,7 @@ function clear() {
         <div
             v-if="open"
             class="card absolute z-30 mt-1 w-full overflow-hidden"
-            style="box-shadow: 0 16px 40px -18px rgba(23, 21, 15, 0.3)"
+            style="box-shadow: 0 18px 44px -18px rgba(4, 6, 20, 0.7)"
         >
             <input
                 ref="searchInput"
