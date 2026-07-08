@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Talent;
+use App\Services\Import\ImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /*
@@ -15,7 +18,7 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -44,7 +47,50 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Fake une réponse OpenRouter chat/completions renvoyant le payload donné.
+ *
+ * @param  array<string, mixed>  $payload
+ */
+function fakeVision(array $payload, float $cost = 0.0012, string $model = 'openai/gpt-4o'): void
 {
-    // ..
+    Http::fake([
+        'openrouter.ai/*' => Http::response([
+            'model' => $model,
+            'choices' => [['message' => ['content' => json_encode($payload)]]],
+            'usage' => ['prompt_tokens' => 900, 'completion_tokens' => 120, 'cost' => $cost],
+        ]),
+    ]);
+}
+
+/**
+ * Fake les deux endpoints OpenRouter : chat (vision) ET embeddings.
+ *
+ * @param  array<string, mixed>  $payload
+ */
+function fakeOpenRouter(array $payload, float $cost = 0.0012, string $model = 'openai/gpt-4o'): void
+{
+    Http::fake(function ($request) use ($payload, $cost, $model) {
+        if (str_contains($request->url(), '/embeddings')) {
+            return Http::response([
+                'data' => [['embedding' => array_fill(0, 1536, 0.01)]],
+            ]);
+        }
+
+        return Http::response([
+            'model' => $model,
+            'choices' => [['message' => ['content' => json_encode($payload)]]],
+            'usage' => ['prompt_tokens' => 900, 'completion_tokens' => 120, 'cost' => $cost],
+        ]);
+    });
+}
+
+/**
+ * Crée un talent avec une image stockée sur le disque public (fake en test).
+ */
+function talentWithImage(): Talent
+{
+    // Contenu unique à chaque appel, sinon la dédupe par hash renvoie null.
+    return app(ImportService::class)
+        ->storeImage('FAKE_IMAGE_BYTES_'.uniqid('', true), 'upload');
 }

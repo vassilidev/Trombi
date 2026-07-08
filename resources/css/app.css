@@ -3,7 +3,187 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* ------------------------------------------------------------------ *
+ *  Trombi — direction artistique « Studio / archive éditoriale »
+ *  Papier studio + encre + accent bleu Klein. Typo serif/sans/mono.
+ * ------------------------------------------------------------------ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    --font-mono: 'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+    --color-paper: #f7f6f3;
+    --color-paper-deep: #efede6;
+    --color-card: #fffffe;
+    --color-ink: #17150f;
+    --color-stone: #78736a;
+    --color-stone-soft: #a8a397;
+    --color-line: #e4e1d8;
+    --color-line-strong: #d4d0c4;
+
+    --color-klein: #1e2bd1;
+    --color-klein-deep: #131c8c;
+    --color-klein-wash: #ecedfb;
+
+    --color-pine: #2e6e4e;
+    --color-rust: #b23a2e;
+    --color-flag: #a9711a;
+
+    --radius-frame: 3px;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-paper);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+        background: var(--color-klein);
+        color: #fff;
+    }
+
+    /* Focus visible discret mais réel (plancher qualité). */
+    :focus-visible {
+        outline: 2px solid var(--color-klein);
+        outline-offset: 2px;
+    }
+}
+
+@layer components {
+    /* Eyebrow : label mono capitales, l'ADN « planche-contact ». */
+    .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        line-height: 1;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--color-stone);
+    }
+
+    /* Titre display en serif éditorial. */
+    .display {
+        font-family: var(--font-serif);
+        font-weight: 400;
+        letter-spacing: -0.015em;
+        line-height: 1.02;
+    }
+
+    /* Surface carte : filet fin, pas d'ombre — flat & éditorial. */
+    .card {
+        background: var(--color-card);
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-frame);
+    }
+
+    /* Boutons. */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        font-family: var(--font-sans);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1;
+        padding: 0.6rem 1.05rem;
+        border-radius: var(--radius-frame);
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition:
+            background-color 0.15s ease,
+            color 0.15s ease,
+            border-color 0.15s ease,
+            transform 0.05s ease;
+    }
+    .btn:active {
+        transform: translateY(1px);
+    }
+    .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .btn-primary {
+        background: var(--color-klein);
+        color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+        background: var(--color-klein-deep);
+    }
+
+    .btn-ink {
+        background: var(--color-ink);
+        color: var(--color-paper);
+    }
+    .btn-ink:hover:not(:disabled) {
+        background: #000;
+    }
+
+    .btn-ghost {
+        background: transparent;
+        color: var(--color-ink);
+        border-color: var(--color-line-strong);
+    }
+    .btn-ghost:hover:not(:disabled) {
+        border-color: var(--color-ink);
+    }
+
+    /* Champs de formulaire. */
+    .field {
+        width: 100%;
+        background: #fff;
+        border: 1px solid var(--color-line-strong);
+        border-radius: var(--radius-frame);
+        padding: 0.55rem 0.75rem;
+        font-size: 0.875rem;
+        color: var(--color-ink);
+        transition: border-color 0.15s ease;
+    }
+    .field::placeholder {
+        color: var(--color-stone-soft);
+    }
+    .field:focus {
+        outline: none;
+        border-color: var(--color-klein);
+    }
+
+    /* Puce / tag mono. */
+    .tag {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        letter-spacing: 0.02em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 2px;
+    }
+
+    /* Chip togglable (multi-select). */
+    .chip {
+        font-family: var(--font-sans);
+        font-size: 0.75rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid var(--color-line-strong);
+        background: #fff;
+        color: var(--color-stone);
+        cursor: pointer;
+        transition:
+            background-color 0.15s ease,
+            color 0.15s ease,
+            border-color 0.15s ease;
+    }
+    .chip:hover {
+        border-color: var(--color-ink);
+        color: var(--color-ink);
+    }
+    .chip-on {
+        background: var(--color-klein);
+        border-color: var(--color-klein);
+        color: #fff;
+    }
+    .chip-on:hover {
+        color: #fff;
+    }
 }
