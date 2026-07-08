@@ -21,7 +21,7 @@ const flash = computed(() => page.props.flash?.message);
 </script>
 
 <template>
-    <div class="min-h-full">
+    <div class="min-h-full" style="overflow-x: clip">
         <!-- Liseré Klein : la colonne vertébrale de l'app -->
         <div class="h-[3px] w-full" style="background: var(--color-klein)" />
 

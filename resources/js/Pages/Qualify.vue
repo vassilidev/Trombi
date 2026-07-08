@@ -138,7 +138,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
 <template>
     <Head :title="`Qualifier ${talent.code}`" />
     <AppLayout>
-        <div class="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <!-- Image + comparaison IA -->
             <div class="lg:sticky lg:top-6 lg:self-start">
                 <figure class="card overflow-hidden">
@@ -205,7 +205,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
 
                 <!-- Comparaison IA -->
                 <div class="card mt-4 p-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
                         <span class="eyebrow">Comparer avec l'IA</span>
                         <span class="flex items-center gap-1.5">
                             <label class="flex cursor-pointer items-center gap-1.5 text-xs" style="color: var(--color-stone)">
@@ -230,28 +230,30 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                 Accord {{ Math.round(diff.overall * 100) }}%
                             </span>
                         </div>
-                        <table class="w-full text-xs">
-                            <thead>
-                                <tr class="eyebrow text-left" style="font-size: 0.5625rem">
-                                    <th class="pb-1.5 font-normal">Champ</th>
-                                    <th class="pb-1.5 font-normal">Toi</th>
-                                    <th class="pb-1.5 font-normal">IA</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="f in diff.fields"
-                                    :key="f.key"
-                                    class="border-t"
-                                    style="border-color: var(--color-line)"
-                                    :style="{ color: f.agree ? 'var(--color-pine)' : 'var(--color-rust)' }"
-                                >
-                                    <td class="py-1 pr-2 font-mono" style="color: var(--color-stone)">{{ f.key }}</td>
-                                    <td class="py-1 pr-2">{{ f.human || '—' }}</td>
-                                    <td class="py-1">{{ f.ai || '—' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[280px] text-xs">
+                                <thead>
+                                    <tr class="eyebrow text-left" style="font-size: 0.5625rem">
+                                        <th class="pb-1.5 font-normal">Champ</th>
+                                        <th class="pb-1.5 font-normal">Toi</th>
+                                        <th class="pb-1.5 font-normal">IA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="f in diff.fields"
+                                        :key="f.key"
+                                        class="border-t"
+                                        style="border-color: var(--color-line)"
+                                        :style="{ color: f.agree ? 'var(--color-pine)' : 'var(--color-rust)' }"
+                                    >
+                                        <td class="py-1 pr-2 font-mono" style="color: var(--color-stone)">{{ f.key }}</td>
+                                        <td class="py-1 pr-2">{{ f.human || '—' }}</td>
+                                        <td class="py-1">{{ f.ai || '—' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -429,7 +431,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                 </div>
 
                 <!-- Attributs single -->
-                <div class="mt-6 grid gap-x-5 gap-y-5 sm:grid-cols-2">
+                <div class="mt-6 grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2">
                     <div v-for="attr in single" :key="attr.key">
                         <div class="mb-1.5 flex items-center gap-1.5">
                             <span class="eyebrow" style="color: var(--color-ink)">{{ attr.label }}</span>

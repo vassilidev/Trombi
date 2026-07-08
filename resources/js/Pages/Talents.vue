@@ -51,7 +51,7 @@ function setFilter(key) {
                     />
                 </div>
             </div>
-            <div class="flex flex-wrap gap-x-4 gap-y-1">
+            <div class="flex w-full flex-wrap gap-x-4 gap-y-1 sm:w-auto">
                 <button
                     v-for="f in filters"
                     :key="f.key"

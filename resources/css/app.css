@@ -159,6 +159,25 @@
         border-radius: 2px;
     }
 
+    /* Bloc JSON mis en couleur (démo « magie » de la landing). */
+    .json-block {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: var(--color-stone);
+    }
+    .json-block .jk {
+        color: var(--color-klein);
+    }
+    .json-block .js {
+        color: var(--color-pine);
+    }
+    .json-block .jn {
+        color: var(--color-rust);
+    }
+
     /* Chip togglable (multi-select). */
     .chip {
         font-family: var(--font-sans);

@@ -52,8 +52,8 @@ const figures = [
                     <strong style="color: var(--color-klein); font-weight: 600">écartés automatiquement</strong>.
                 </p>
             </div>
-            <div class="flex gap-6">
-                <div v-for="f in figures" :key="f.key" class="text-right">
+            <div class="flex flex-wrap gap-x-6 gap-y-3">
+                <div v-for="f in figures" :key="f.key">
                     <div class="display text-3xl" :style="{ color: f.key === 'total' ? 'var(--color-klein)' : 'var(--color-ink)' }">
                         {{ stats[f.key] }}
                     </div>
@@ -62,7 +62,7 @@ const figures = [
             </div>
         </div>
 
-        <div class="mt-8 grid gap-4 md:grid-cols-2">
+        <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Upload -->
             <label
                 class="card flex cursor-pointer flex-col items-center justify-center p-10 text-center transition-colors"
@@ -109,9 +109,11 @@ const figures = [
         </div>
 
         <!-- Récents -->
-        <div class="rule mt-12 flex items-center justify-between pt-4">
+        <div class="rule mt-12 flex flex-wrap items-center justify-between gap-2 pt-4">
             <p class="eyebrow">Derniers imports</p>
-            <span class="eyebrow" style="color: var(--color-stone-soft)">Clique un visage pour le qualifier</span>
+            <span class="eyebrow hidden sm:inline" style="color: var(--color-stone-soft)">
+                Clique un visage pour le qualifier
+            </span>
         </div>
         <div
             v-if="talents.data.length"
