@@ -277,6 +277,10 @@ class TalentController extends Controller
             annotator: 'humain',
         );
 
+        // Rend le talent cherchable : (ré)génère l'embedding depuis les valeurs
+        // humaines fraîches. L'appearance existe déjà → le job saute la vision.
+        AnalyzeTalentJob::dispatch($talent->id);
+
         // « Sauvegarder » ou import IA : on reste sur la fiche.
         if ($request->boolean('stay')) {
             $message = $request->filled('note')

@@ -55,7 +55,8 @@ function deleteTalent() {
 }
 
 // --- Métadonnées ---
-const showMeta = ref(false);
+// Ouvert par défaut : on veut voir d'emblée les données IA + le vecteur.
+const showMeta = ref(true);
 
 const single = props.taxonomy.single;
 const multi = props.taxonomy.multi;
@@ -498,33 +499,47 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                             </div>
                         </div>
 
-                        <div v-if="meta.profile">
+                        <div>
                             <div class="flex items-center gap-1">
                                 <span class="eyebrow">Vecteur de recherche</span>
                                 <HelpTip
                                     title="Vecteur (embedding)"
-                                    detail="La description du talent est transformée en une liste de 1536 nombres qui capture son « sens ». La recherche compare ces vecteurs pour trouver les profils proches d'une demande, même sans les mots exacts."
+                                    detail="La description du talent est transformée en une liste de 1536 nombres qui capture son « sens ». La recherche compare ces vecteurs pour trouver les profils proches d'une demande, même sans les mots exacts. Sans vecteur, le talent n'apparaît pas dans la recherche."
                                     eyebrow="C'est quoi ?"
                                 />
                             </div>
-                            <p class="mt-1" style="color: var(--color-stone)">
-                                {{
-                                    meta.profile.embedding
-                                        ? meta.profile.embedding.dims + ' dimensions · norme ' + meta.profile.embedding.norm
-                                        : 'pas encore de vecteur'
-                                }}
-                            </p>
-                            <p
-                                v-if="meta.profile.embedding"
-                                class="mt-1 truncate font-mono"
-                                style="color: var(--color-stone-soft)"
-                            >
-                                [{{ meta.profile.embedding.preview.join(', ') }}, …]
-                            </p>
-                            <div class="mt-2">
-                                <span class="eyebrow">Texte recherchable</span>
-                                <p class="mt-1" style="color: var(--color-stone)">{{ meta.profile.searchable_text }}</p>
+
+                            <!-- Statut : cherchable ou non -->
+                            <div class="mt-1.5 flex items-center gap-1.5">
+                                <span
+                                    class="tag"
+                                    :style="
+                                        meta.profile && meta.profile.embedding
+                                            ? 'background: var(--color-pine); color: #fff'
+                                            : 'background: var(--color-rust); color: #fff'
+                                    "
+                                >
+                                    {{ meta.profile && meta.profile.embedding ? 'cherchable' : 'pas cherchable' }}
+                                </span>
                             </div>
+
+                            <template v-if="meta.profile && meta.profile.embedding">
+                                <p class="mt-1.5" style="color: var(--color-stone)">
+                                    {{ meta.profile.embedding.dims }} dimensions · norme {{ meta.profile.embedding.norm }}
+                                    <span v-if="meta.profile.embedded_at"> · {{ meta.profile.embedded_at }}</span>
+                                </p>
+                                <p class="mt-1 truncate font-mono" style="color: var(--color-stone-soft)">
+                                    [{{ meta.profile.embedding.preview.join(', ') }}, …]
+                                </p>
+                                <div class="mt-2">
+                                    <span class="eyebrow">Texte recherchable</span>
+                                    <p class="mt-1" style="color: var(--color-stone)">{{ meta.profile.searchable_text }}</p>
+                                </div>
+                            </template>
+                            <p v-else class="mt-1.5" style="color: var(--color-stone)">
+                                Pas encore de vecteur. Il est généré à l'enregistrement de la qualification
+                                (une fois la queue Horizon passée). Ce talent n'apparaît pas encore dans la recherche.
+                            </p>
                         </div>
 
                         <div v-if="meta.annotations.length">

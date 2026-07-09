@@ -1,10 +1,21 @@
 <?php
 
+use App\Jobs\AnalyzeTalentJob;
 use App\Models\Talent;
 use Database\Seeders\TagSeeder;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->seed(TagSeeder::class);
+    Queue::fake();
+});
+
+it('queues the embedding so the talent becomes searchable', function () {
+    $talent = Talent::factory()->create();
+
+    $this->post("/talents/{$talent->id}/qualify", ['genre' => 'femme', 'stay' => true]);
+
+    Queue::assertPushed(AnalyzeTalentJob::class, fn ($job) => $job->talentId === $talent->id);
 });
 
 it('records a human annotation, marks gold, writes appearance and tags', function () {
