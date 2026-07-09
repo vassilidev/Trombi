@@ -33,9 +33,10 @@ class QueryParserService
         $decoded = json_decode(trim($result->content), true);
 
         // Si le parsing casse, on retombe sur du sémantique pur avec la requête entière.
+        // Puis on force les mots exacts de la taxonomie en filtres durs (filet LLM).
         return SearchFilters::fromLlm(
             is_array($decoded) ? $decoded : [],
             fallbackSemantic: $query,
-        );
+        )->withKeywordFallback($query);
     }
 }

@@ -63,6 +63,10 @@ class SearchService
     {
         $attributeKeys = array_keys($filters->attributes);
 
+        // Le genre est un filtre DUR non négociable : on ne le relâche jamais, même
+        // en souple. Mieux vaut zéro résultat qu'un homme sur une recherche « femme ».
+        $genreKey = array_values(array_intersect($attributeKeys, ['genre']));
+
         // Tiers du plus contraint au moins contraint.
         $tiers = [
             ['attributes' => $attributeKeys, 'age' => true, 'tags' => true],
@@ -70,8 +74,8 @@ class SearchService
 
         if ($filters->durete === 'souple') {
             $tiers[] = ['attributes' => $attributeKeys, 'age' => true, 'tags' => false];
-            $tiers[] = ['attributes' => array_values(array_intersect($attributeKeys, ['genre'])), 'age' => true, 'tags' => false];
-            $tiers[] = ['attributes' => [], 'age' => false, 'tags' => false]; // sémantique pur
+            $tiers[] = ['attributes' => $genreKey, 'age' => true, 'tags' => false];
+            $tiers[] = ['attributes' => $genreKey, 'age' => false, 'tags' => false]; // genre reste dur
         }
 
         $last = [];

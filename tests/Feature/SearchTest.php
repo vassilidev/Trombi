@@ -54,16 +54,28 @@ it('logs the brief and its matches', function () {
         ->and($brief->matches()->count())->toBeGreaterThan(0);
 });
 
-it('relaxes constraints instead of returning an empty list (souple)', function () {
-    // On cherche une femme, mais la base ne contient qu'un homme.
-    fakeOpenRouter(['genre' => 'femme', 'durete' => 'souple', 'semantic_text' => 'x']);
+it('relaxes other constraints but never the gender filter (souple)', function () {
+    // On cherche une femme rousse ; la seule femme est brune, il y a aussi un homme.
+    fakeOpenRouter(['genre' => 'femme', 'cheveux_couleur' => 'roux', 'durete' => 'souple', 'semantic_text' => 'x']);
+    $femme = searchableTalent(['genre' => 'femme', 'cheveux_couleur' => 'brun']);
     $homme = searchableTalent(['genre' => 'homme']);
 
-    $outcome = app(SearchService::class)->search('une femme');
+    $outcome = app(SearchService::class)->search('une femme rousse');
+    $ids = array_column($outcome['results'], 'talent_id');
 
-    expect($outcome['results'])->not->toBeEmpty()
-        ->and($outcome['relaxed'])->toBeTrue()
-        ->and(array_column($outcome['results'], 'talent_id'))->toContain($homme->id);
+    expect($ids)->toContain($femme->id)        // la couleur de cheveux est relâchée
+        ->and($ids)->not->toContain($homme->id) // mais le genre reste dur
+        ->and($outcome['relaxed'])->toBeTrue();
+});
+
+it('never returns the other gender even with no match (femme → jamais un homme)', function () {
+    fakeOpenRouter(['durete' => 'souple', 'semantic_text' => 'x']); // le LLM rate le genre
+    $homme = searchableTalent(['genre' => 'homme']);
+
+    // « fille » n'est pas dans la taxonomie : le filet synonyme doit le mapper.
+    $outcome = app(SearchService::class)->search('je cherche une fille');
+
+    expect(array_column($outcome['results'], 'talent_id'))->not->toContain($homme->id);
 });
 
 it('renders search results through the home page', function () {
