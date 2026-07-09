@@ -2,13 +2,17 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import HelpTip from '@/Components/HelpTip.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 
 const props = defineProps({
     prompts: { type: Array, required: true },
     defaults: { type: Array, required: true },
-    placeholders: { type: Object, required: true },
+    placeholders: { type: Array, required: true },
 });
+
+// Aperçu des variables : quel token est déplié.
+const openPreview = ref(null);
+const togglePreview = (token) => (openPreview.value = openPreview.value === token ? null : token);
 
 // Un formulaire d'édition par prompt.
 const forms = reactive(
@@ -24,7 +28,6 @@ function restore(prompt) {
     if (def) forms[prompt.id].content = def.content;
 }
 
-const placeholderList = Object.entries(props.placeholders).map(([token, desc]) => ({ token, desc }));
 </script>
 
 <template>
@@ -43,15 +46,31 @@ const placeholderList = Object.entries(props.placeholders).map(([token, desc]) =
             <strong style="color: var(--color-klein); font-weight: 600">nouvelle version</strong>.
         </p>
 
-        <!-- Placeholders -->
-        <div class="mt-5 flex flex-wrap gap-x-6 gap-y-1">
-            <div v-for="p in placeholderList" :key="p.token" class="flex items-center gap-2">
-                <code
-                    class="font-mono text-xs"
-                    style="background: var(--color-klein-wash); color: var(--color-klein-deep); padding: 0.1rem 0.35rem; border-radius: 2px"
-                    >{{ p.token }}</code
-                >
-                <span class="text-xs" style="color: var(--color-stone)">{{ p.desc }}</span>
+        <!-- Placeholders : description + aperçu de la valeur injectée -->
+        <div class="mt-5 space-y-2">
+            <div v-for="p in placeholders" :key="p.token" class="card p-3">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <code
+                        class="font-mono text-xs"
+                        style="background: var(--color-klein-wash); color: var(--color-klein-deep); padding: 0.1rem 0.35rem; border-radius: 2px"
+                        >{{ p.token }}</code
+                    >
+                    <span class="text-xs" style="color: var(--color-stone)">{{ p.desc }}</span>
+                    <span class="grow"></span>
+                    <button
+                        type="button"
+                        class="font-mono text-[11px] underline transition-opacity hover:opacity-70"
+                        style="color: var(--color-klein)"
+                        @click="togglePreview(p.token)"
+                    >
+                        {{ openPreview === p.token ? 'masquer l’aperçu' : 'voir l’aperçu' }}
+                    </button>
+                </div>
+                <pre
+                    v-if="openPreview === p.token"
+                    class="mt-2 max-h-64 overflow-auto p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap"
+                    style="background: var(--color-paper-deep); border-radius: 2px; color: var(--color-stone)"
+                    >{{ p.value }}</pre>
             </div>
         </div>
 

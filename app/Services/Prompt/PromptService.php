@@ -51,13 +51,24 @@ class PromptService
      */
     private function resolve(string $template): string
     {
-        $tags = implode(' | ', [...Vibe::values(), ...SigneDistinctif::values()]);
-
         return str_replace(
-            ['{{VOCABULAIRE}}', '{{TAGS}}'],
-            [Taxonomy::promptVocabulary(), $tags],
+            array_keys($this->placeholderValues()),
+            array_values($this->placeholderValues()),
             $template,
         );
+    }
+
+    /**
+     * Valeurs courantes injectées à la place de chaque placeholder.
+     *
+     * @return array<string, string>
+     */
+    public function placeholderValues(): array
+    {
+        return [
+            '{{VOCABULAIRE}}' => Taxonomy::promptVocabulary(),
+            '{{TAGS}}' => implode(' | ', [...Vibe::values(), ...SigneDistinctif::values()]),
+        ];
     }
 
     /**
