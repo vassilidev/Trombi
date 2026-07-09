@@ -3,8 +3,10 @@
 namespace App\Services\Embedding;
 
 use App\Models\Talent;
+use App\Models\TalentAppearance;
 use App\Models\TalentProfile;
 use App\Services\OpenRouter\OpenRouterClient;
+use App\Support\Taxonomy;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -30,7 +32,7 @@ class EmbeddingService
         }
 
         $description = $appearance->raw_analysis['description_fr'] ?? '';
-        $searchable = $this->buildSearchableText($description, $talent->tags->pluck('label')->all());
+        $searchable = $this->buildSearchableText($appearance, $talent->tags->pluck('label')->all(), $description);
 
         $vector = $this->client->embed($searchable);
 
@@ -50,20 +52,46 @@ class EmbeddingService
     }
 
     /**
-     * Concatène description + libellés de tags en un texte à embedder.
+     * Texte recherchable : portrait-robot structuré (attributs + âge) + vibe/signes
+     * (tags) + description libre. C'est CE texte qui est embeddé, donc un profil sans
+     * description écrite reste tout de même riche et cherchable (attributs seuls).
      *
      * @param  array<int, string>  $tagLabels
      */
-    public function buildSearchableText(string $description, array $tagLabels): string
+    public function buildSearchableText(TalentAppearance $appearance, array $tagLabels, string $description = ''): string
     {
-        $parts = array_filter([
-            trim($description),
+        $segments = array_filter([
+            $this->describeAttributes($appearance),
             $tagLabels === [] ? null : implode(', ', $tagLabels),
+            trim($description) !== '' ? trim($description) : null,
         ]);
 
-        $text = implode('. ', $parts);
+        $text = implode('. ', $segments);
 
         return $text !== '' ? $text : 'profil sans description';
+    }
+
+    /**
+     * Transforme les attributs structurés en une phrase lisible (libellés FR),
+     * e.g. « Homme, Europeen, Carnation II, Brun, Court, …, 30 à 35 ans ».
+     */
+    private function describeAttributes(TalentAppearance $appearance): ?string
+    {
+        $parts = [];
+
+        foreach (Taxonomy::singleAttributes() as $field => $enum) {
+            $label = $enum::tryFromValue($appearance->{$field})?->label();
+
+            if ($label !== null) {
+                $parts[] = $label;
+            }
+        }
+
+        if ($appearance->age_min !== null || $appearance->age_max !== null) {
+            $parts[] = trim("{$appearance->age_min} à {$appearance->age_max}").' ans';
+        }
+
+        return $parts === [] ? null : implode(', ', $parts);
     }
 
     /**

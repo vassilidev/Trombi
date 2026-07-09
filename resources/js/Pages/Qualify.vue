@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchableSelect from '@/Components/SearchableSelect.vue';
 import MultiChips from '@/Components/MultiChips.vue';
 import HelpTip from '@/Components/HelpTip.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -223,10 +223,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                         style="border-color: var(--color-line)"
                     >
                         <span class="min-w-0">
-                            <span v-if="talent.first_name || talent.last_name" class="block truncate text-xs font-semibold" style="color: var(--color-ink)">
+                            <span
+                                v-if="talent.first_name || talent.last_name"
+                                class="block truncate text-xs font-semibold"
+                                style="color: var(--color-ink)"
+                                :title="[talent.first_name, talent.last_name].filter(Boolean).join(' ')"
+                            >
                                 {{ [talent.first_name, talent.last_name].filter(Boolean).join(' ') }}
                             </span>
-                            <span class="block truncate font-mono text-xs" style="color: var(--color-stone)">
+                            <span class="block truncate font-mono text-xs" style="color: var(--color-stone)" :title="talent.location || talent.code">
                                 {{ talent.location || talent.code }}
                             </span>
                         </span>
@@ -528,34 +533,43 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                     {{ meta.profile.embedding.dims }} dimensions · norme {{ meta.profile.embedding.norm }}
                                     <span v-if="meta.profile.embedded_at"> · {{ meta.profile.embedded_at }}</span>
                                 </p>
-                                <p class="mt-1 truncate font-mono" style="color: var(--color-stone-soft)">
+                                <p
+                                    class="mt-1 font-mono leading-relaxed break-all"
+                                    style="color: var(--color-stone-soft)"
+                                >
                                     [{{ meta.profile.embedding.preview.join(', ') }}, …]
                                 </p>
+
                                 <div class="mt-2">
                                     <span class="eyebrow">Texte recherchable</span>
-                                    <p class="mt-1" style="color: var(--color-stone)">{{ meta.profile.searchable_text }}</p>
+                                    <p class="mt-1 break-words" style="color: var(--color-stone)">
+                                        {{ meta.profile.searchable_text }}
+                                    </p>
+                                </div>
+
+                                <!-- Notice : comment lire / comparer un vecteur -->
+                                <div
+                                    class="mt-3 border-l-2 pl-3 leading-relaxed"
+                                    style="border-color: var(--color-line-strong); color: var(--color-stone)"
+                                >
+                                    <p class="mb-1" style="color: var(--color-ink)">Comment le lire</p>
+                                    Ce <strong style="color: var(--color-ink)">texte recherchable</strong> (attributs +
+                                    vibe + description) est envoyé à un modèle d'embedding qui le transforme en
+                                    <strong style="color: var(--color-ink)">{{ meta.profile.embedding.dims }} nombres</strong>.
+                                    Ils placent le profil comme un point sur une sphère (norme ≈ 1). On ne lit pas un
+                                    nombre isolé : ce qui compte, c'est la <strong style="color: var(--color-ink)">direction</strong>.
+                                    Deux profils proches en direction = un
+                                    <strong style="color: var(--color-ink)">cosinus</strong> élevé = une recherche qui les
+                                    rapproche.
+                                    <Link href="/labo" class="mt-1 inline-block underline" style="color: var(--color-klein)">
+                                        Comprendre la méthode →
+                                    </Link>
                                 </div>
                             </template>
                             <p v-else class="mt-1.5" style="color: var(--color-stone)">
                                 Pas encore de vecteur. Il est généré à l'enregistrement de la qualification
                                 (une fois la queue Horizon passée). Ce talent n'apparaît pas encore dans la recherche.
                             </p>
-                        </div>
-
-                        <div v-if="meta.annotations.length">
-                            <div class="flex items-center gap-1">
-                                <span class="eyebrow">Historique</span>
-                                <HelpTip
-                                    title="Historique d'annotations"
-                                    detail="Chaque passage — le tien ou celui de l'IA — est archivé ici. C'est ce qui permet de comparer, de suivre l'accord dans le temps, et de nourrir l'IA de tes corrections."
-                                    eyebrow="Info"
-                                />
-                            </div>
-                            <ul class="mt-1 space-y-0.5 font-mono" style="color: var(--color-stone)">
-                                <li v-for="(a, i) in meta.annotations" :key="i">
-                                    {{ a.source }} · {{ a.annotator || '—' }} · {{ a.created_at }}
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>

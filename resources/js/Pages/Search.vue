@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import HelpTip from '@/Components/HelpTip.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -107,8 +107,15 @@ function filterChips(filters) {
             </div>
 
             <div class="rule mt-6 flex flex-wrap items-center gap-2 pt-4">
-                <span class="eyebrow" style="color: var(--color-ink)">
-                    {{ search.results.length }} résultat{{ search.results.length > 1 ? 's' : '' }}
+                <span class="inline-flex items-center gap-1">
+                    <span class="eyebrow" style="color: var(--color-ink)">
+                        {{ search.results.length }} résultat{{ search.results.length > 1 ? 's' : '' }}
+                    </span>
+                    <HelpTip
+                        title="Comment lire le score"
+                        detail="Les critères durs (genre, âge…) sont déjà filtrés exactement en amont. Le pourcentage mesure la PROXIMITÉ SÉMANTIQUE entre ta demande et le portrait du profil (allure, style) — via l'angle entre leurs vecteurs. Il atteint rarement 100 % car il compare du sens, pas des mots identiques : 40–70 % est déjà une très bonne correspondance. Clique un profil pour l'ouvrir."
+                        eyebrow="Score"
+                    />
                 </span>
                 <span v-if="search.relaxed" class="inline-flex items-center gap-1">
                     <span class="tag" style="background: var(--color-flag); color: var(--color-paper)">recherche élargie</span>
@@ -129,7 +136,12 @@ function filterChips(filters) {
             </div>
 
             <div v-if="search.results.length" class="mt-4 space-y-3">
-                <article v-for="(r, i) in search.results" :key="r.id" class="card flex gap-4 p-3">
+                <Link
+                    v-for="(r, i) in search.results"
+                    :key="r.id"
+                    :href="`/talents/${r.id}/qualify`"
+                    class="card flex gap-4 p-3 transition-colors hover:border-[var(--color-line-strong)]"
+                >
                     <div class="relative w-24 shrink-0 overflow-hidden" style="border-radius: 2px; background: var(--color-paper-deep)">
                         <img v-if="r.photo_url" :src="r.photo_url" class="aspect-[4/5] size-full object-cover" />
                         <span class="absolute left-1 top-1 font-mono text-[10px] font-bold" style="background: var(--color-ink); color: var(--color-paper); padding: 0 0.25rem; border-radius: 2px">
@@ -139,18 +151,23 @@ function filterChips(filters) {
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center justify-between gap-2">
                             <span class="min-w-0">
-                                <span v-if="r.name" class="block truncate text-sm font-semibold" style="color: var(--color-ink)">{{ r.name }}</span>
-                                <span class="block truncate font-mono text-xs" style="color: var(--color-stone)">
+                                <span v-if="r.name" class="block truncate text-sm font-semibold" style="color: var(--color-ink)" :title="r.name">{{ r.name }}</span>
+                                <span class="block truncate font-mono text-xs" style="color: var(--color-stone)" :title="r.location ? `${r.code} · ${r.location}` : r.code">
                                     {{ r.location ? `${r.code} · ${r.location}` : r.code }}
                                 </span>
                             </span>
-                            <span class="shrink-0 font-mono text-sm font-bold tabular-nums" style="color: var(--color-klein)">{{ Math.round(r.score * 100) }}%</span>
+                            <span
+                                class="shrink-0 font-mono text-sm font-bold tabular-nums"
+                                :title="`Proximité sémantique : ${Math.round(r.score * 100)}%`"
+                                style="color: var(--color-klein)"
+                                >{{ Math.round(r.score * 100) }}%</span
+                            >
                         </div>
                         <p class="mt-1.5 text-sm leading-relaxed" style="color: var(--color-ink)">
                             {{ r.description || 'Pas encore de description.' }}
                         </p>
                     </div>
-                </article>
+                </Link>
             </div>
             <p v-else class="card mt-4 p-8 text-center text-sm" style="color: var(--color-stone)">
                 Aucun profil ne correspond. Essaie une formulation plus large.

@@ -2,6 +2,7 @@
 
 use App\Jobs\AnalyzeTalentJob;
 use App\Models\Talent;
+use App\Models\TalentAppearance;
 use App\Services\Embedding\EmbeddingService;
 use Database\Seeders\TagSeeder;
 use Illuminate\Support\Facades\DB;
@@ -12,10 +13,31 @@ beforeEach(function () {
     $this->seed(TagSeeder::class);
 });
 
-it('builds searchable text from description and tag labels', function () {
-    $text = app(EmbeddingService::class)->buildSearchableText('Portrait doux.', ['Naturel', 'Editorial']);
+it('builds searchable text from structured attributes, tags and description', function () {
+    $appearance = new TalentAppearance([
+        'genre' => 'homme',
+        'type_percu' => 'europeen',
+        'cheveux_couleur' => 'brun',
+        'age_min' => 30,
+        'age_max' => 35,
+    ]);
 
-    expect($text)->toBe('Portrait doux.. Naturel, Editorial');
+    $text = app(EmbeddingService::class)->buildSearchableText($appearance, ['Naturel', 'Commercial'], 'Portrait doux.');
+
+    expect($text)
+        ->toContain('Homme')
+        ->toContain('Brun')
+        ->toContain('30 à 35 ans')
+        ->toContain('Naturel, Commercial')
+        ->toContain('Portrait doux.');
+});
+
+it('stays searchable even without a written description', function () {
+    $appearance = new TalentAppearance(['genre' => 'femme', 'yeux_couleur' => 'vert']);
+
+    $text = app(EmbeddingService::class)->buildSearchableText($appearance, [], '');
+
+    expect($text)->toContain('Femme')->not->toBe('profil sans description');
 });
 
 it('analyzes then embeds a pending talent end to end', function () {

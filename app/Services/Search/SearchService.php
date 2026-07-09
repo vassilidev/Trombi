@@ -5,6 +5,7 @@ namespace App\Services\Search;
 use App\Models\Brief;
 use App\Services\OpenRouter\OpenRouterClient;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,6 +23,18 @@ class SearchService
      * @return array{brief_id: int, filters: array<string, mixed>, relaxed: bool, results: list<array{talent_id: int, similarite: float}>}
      */
     public function search(string $query, string $sourceKind = 'chat', int $limit = 5): array
+    {
+        // Cache court : rafraîchir la même recherche est instantané et évite de
+        // rappeler OpenRouter (parsing + embedding). Invalidé à chaque ré-embedding.
+        $key = 'search:'.md5($sourceKind.'|'.$limit.'|'.mb_strtolower(trim($query))).':'.self::datasetVersion();
+
+        return Cache::remember($key, now()->addMinutes(10), fn (): array => $this->runSearch($query, $sourceKind, $limit));
+    }
+
+    /**
+     * @return array{brief_id: int, filters: array<string, mixed>, relaxed: bool, results: list<array{talent_id: int, similarite: float}>}
+     */
+    private function runSearch(string $query, string $sourceKind, int $limit): array
     {
         $filters = $this->parser->parse($query);
         $semantic = $filters->semanticText !== '' ? $filters->semanticText : $query;
@@ -175,5 +188,16 @@ class SearchService
     private function vectorLiteral(array $vector): string
     {
         return '['.implode(',', $vector).']';
+    }
+
+    /**
+     * Empreinte du dataset : change dès qu'un talent est (ré)embeddé, ce qui
+     * invalide naturellement le cache de recherche (nouveaux vecteurs pris en compte).
+     */
+    private static function datasetVersion(): string
+    {
+        $row = DB::selectOne('SELECT count(*) AS c, max(embedded_at) AS m FROM talent_profiles');
+
+        return ($row->c ?? 0).'-'.($row->m ?? '0');
     }
 }

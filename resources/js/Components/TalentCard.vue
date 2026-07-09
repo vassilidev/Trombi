@@ -42,10 +42,10 @@ defineProps({
             style="border-color: var(--color-line)"
         >
             <span class="min-w-0">
-                <span v-if="talent.name" class="block truncate text-xs font-semibold" style="color: var(--color-ink)">
+                <span v-if="talent.name" class="block truncate text-xs font-semibold" style="color: var(--color-ink)" :title="talent.name">
                     {{ talent.name }}
                 </span>
-                <span class="block truncate font-mono text-[11px]" style="color: var(--color-stone)">
+                <span class="block truncate font-mono text-[11px]" style="color: var(--color-stone)" :title="talent.location || talent.code">
                     {{ talent.location || talent.code }}
                 </span>
             </span>
