@@ -13,6 +13,8 @@ const props = defineProps({
     diff: { type: [Object, null], default: null },
     meta: { type: Object, required: true },
     nextId: { type: [Number, null], default: null },
+    visionModels: { type: Array, default: () => [] },
+    defaultModel: { type: String, default: '' },
 });
 
 // --- Gestion des photos ---
@@ -91,12 +93,13 @@ watch(
 // --- Analyse IA + comparaison ---
 const fewShot = ref(false);
 const analyzing = ref(false);
+const model = ref(props.defaultModel);
 
 function analyze() {
     analyzing.value = true;
     router.post(
         `/talents/${props.talent.id}/analyze`,
-        { few_shot: fewShot.value },
+        { few_shot: fewShot.value, model: model.value },
         { preserveScroll: true, onFinish: () => (analyzing.value = false) },
     );
 }
@@ -333,7 +336,17 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                             />
                         </span>
                     </div>
-                    <button class="btn btn-ghost mt-3 w-full" :disabled="analyzing" @click="analyze">
+                    <div class="mt-3 flex items-center gap-1.5">
+                        <select v-model="model" class="field" style="flex: 1; font-size: 0.75rem">
+                            <option v-for="m in visionModels" :key="m" :value="m">{{ m }}</option>
+                        </select>
+                        <HelpTip
+                            title="Choisir le modèle vision"
+                            detail="gpt-4o refuse souvent d'analyser un mineur. Si l'analyse échoue, essaie un autre modèle (Gemini, Qwen-VL, Llama-Vision…) : certains acceptent une description professionnelle là où d'autres bloquent. Aucune garantie, ça dépend de leur politique."
+                            eyebrow="Modèle"
+                        />
+                    </div>
+                    <button class="btn btn-ghost mt-2 w-full" :disabled="analyzing" @click="analyze">
                         {{ analyzing ? 'Analyse en cours…' : 'Lancer l’analyse IA' }}
                     </button>
 

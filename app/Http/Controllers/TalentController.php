@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -163,6 +164,8 @@ class TalentController extends Controller
             'diff' => $this->diff($talent),
             'meta' => $this->meta($talent),
             'nextId' => $this->nextToQualify($talent)?->id,
+            'visionModels' => config('services.openrouter.benchmark_models'),
+            'defaultModel' => config('services.openrouter.vision_model'),
         ]);
     }
 
@@ -251,6 +254,18 @@ class TalentController extends Controller
 
         $result = $vision->analyze($talent, $request->input('model'), $fewShot);
 
+        // JSON non conforme = souvent un refus du modèle (ex. mineur sur la photo).
+        // On n'enregistre pas d'annotation vide et on montre la vraie réponse.
+        if (! $result->isValidJson) {
+            $snippet = Str::of($result->rawContent)->squish()->limit(220)->toString();
+
+            return back()->with('flash', [
+                'message' => "L'IA n'a pas renvoyé de portrait exploitable ({$result->model}). "
+                    .($snippet !== '' ? "Réponse du modèle : « {$snippet} ». " : '')
+                    .'Ce modèle refuse souvent d’analyser un mineur — essaie un autre modèle vision (page Benchmark) ou qualifie ce profil à la main.',
+            ]);
+        }
+
         $this->annotations->record(
             talent: $talent,
             payload: $result->payload,
@@ -259,11 +274,7 @@ class TalentController extends Controller
             model: $result->model,
         );
 
-        $message = $result->isValidJson
-            ? "Analyse IA OK ({$result->model}, {$result->latencyMs}ms)."
-            : "Analyse IA : JSON non conforme à la taxonomie ({$result->model}).";
-
-        return back()->with('flash', ['message' => $message]);
+        return back()->with('flash', ['message' => "Analyse IA OK ({$result->model}, {$result->latencyMs}ms)."]);
     }
 
     public function storeQualification(

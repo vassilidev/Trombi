@@ -2,11 +2,31 @@
 
 use App\Services\Vision\VisionAnalysisService;
 use Database\Seeders\TagSeeder;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('public');
     $this->seed(TagSeeder::class);
+});
+
+it('reports a model refusal (e.g. minor) without recording an empty annotation', function () {
+    Http::fake([
+        '*/embeddings' => Http::response(['data' => [['embedding' => array_fill(0, 1536, 0.01)]]]),
+        '*/chat/completions' => Http::response([
+            'model' => 'openai/gpt-4o',
+            'choices' => [['message' => ['content' => "I'm sorry, but I can't describe this person."]]],
+            'usage' => ['prompt_tokens' => 100, 'completion_tokens' => 20],
+        ]),
+    ]);
+
+    $talent = talentWithImage();
+
+    $this->post("/talents/{$talent->id}/analyze")
+        ->assertRedirect()
+        ->assertSessionHas('flash.message', fn (string $m): bool => str_contains($m, 'mineur') && str_contains($m, 'sorry'));
+
+    expect($talent->annotations()->where('source', 'ai')->count())->toBe(0);
 });
 
 it('analyzes a face, normalizes to the taxonomy and reports validity', function () {
