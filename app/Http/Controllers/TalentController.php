@@ -274,8 +274,15 @@ class TalentController extends Controller
             talent: $talent,
             payload: $request->payload(),
             source: 'human',
-            annotator: 'vassili',
+            annotator: 'humain',
         );
+
+        // « Sauvegarder » (sans passer au suivant) : on reste sur la fiche.
+        if ($request->boolean('stay')) {
+            return redirect()
+                ->route('talents.qualify', $talent)
+                ->with('flash', ['message' => "{$talent->code} qualifié."]);
+        }
 
         $next = $this->nextToQualify($talent);
 
@@ -310,24 +317,33 @@ class TalentController extends Controller
         foreach (array_keys(Taxonomy::singleAttributes()) as $field) {
             $fields[] = [
                 'key' => $field,
+                'kind' => 'single',
                 'human' => $human->payload[$field] ?? null,
                 'ai' => $ai->payload[$field] ?? null,
+                'ai_raw' => $ai->payload[$field] ?? null,
                 'agree' => $comparison['per_field'][$field],
             ];
         }
 
         $fields[] = [
             'key' => 'age',
+            'kind' => 'age',
             'human' => $this->ageLabel($human->payload),
             'ai' => $this->ageLabel($ai->payload),
+            'ai_raw' => [
+                'age_min' => $ai->payload['age_min'] ?? null,
+                'age_max' => $ai->payload['age_max'] ?? null,
+            ],
             'agree' => $comparison['per_field']['age'],
         ];
 
         foreach (array_keys(Taxonomy::multiAttributes()) as $field) {
             $fields[] = [
                 'key' => $field,
+                'kind' => 'multi',
                 'human' => implode(', ', $human->payload[$field] ?? []),
                 'ai' => implode(', ', $ai->payload[$field] ?? []),
+                'ai_raw' => array_values($ai->payload[$field] ?? []),
                 'agree' => $comparison['per_field'][$field],
             ];
         }

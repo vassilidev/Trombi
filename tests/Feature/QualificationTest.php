@@ -51,3 +51,16 @@ it('sends the operator to the next talent to qualify', function () {
     $this->post("/talents/{$first->id}/qualify", ['genre' => 'homme'])
         ->assertRedirect("/talents/{$second->id}/qualify");
 });
+
+it('stays on the same talent when saving with stay', function () {
+    $first = Talent::factory()->create();
+    Talent::factory()->create();
+
+    $this->post("/talents/{$first->id}/qualify", ['genre' => 'homme', 'stay' => true])
+        ->assertRedirect("/talents/{$first->id}/qualify");
+
+    $first->refresh()->load('annotations');
+
+    expect($first->is_gold)->toBeTrue()
+        ->and($first->annotations->firstWhere('source', 'human')->annotator)->toBe('humain');
+});

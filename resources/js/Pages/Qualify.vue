@@ -140,9 +140,36 @@ function applySuggestion(entry) {
     searchOpen.value = false;
 }
 
+// --- Import des valeurs détectées par l'IA ---
+// L'humain relit ce que l'IA propose et l'adopte dans le formulaire, champ par
+// champ ou d'un bloc. Rien n'est enregistré tant qu'il n'a pas sauvegardé.
+const refused = ref(new Set());
+
+function importField(f) {
+    if (f.kind === 'age') {
+        form.age_min = f.ai_raw?.age_min ?? null;
+        form.age_max = f.ai_raw?.age_max ?? null;
+    } else if (f.kind === 'multi') {
+        form[f.key] = [...(f.ai_raw ?? [])];
+    } else {
+        form[f.key] = f.ai_raw ?? null;
+    }
+    refused.value.delete(f.key);
+}
+
+function refuseField(f) {
+    refused.value = new Set(refused.value).add(f.key);
+}
+
+function importAll() {
+    (props.diff?.fields ?? []).forEach((f) => {
+        if (!refused.value.has(f.key)) importField(f);
+    });
+}
+
 // --- Sauvegarde ---
-function save() {
-    form.post(`/talents/${props.talent.id}/qualify`);
+function save(stay = false) {
+    form.transform((data) => ({ ...data, stay })).post(`/talents/${props.talent.id}/qualify`);
 }
 
 function onKey(e) {
@@ -294,6 +321,21 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                 Accord {{ Math.round(diff.overall * 100) }}%
                             </span>
                         </div>
+                        <div class="mb-2 flex items-center gap-2">
+                            <button
+                                type="button"
+                                class="btn btn-ghost"
+                                style="padding: 0.35rem 0.7rem; font-size: 0.6875rem"
+                                @click="importAll"
+                            >
+                                Tout importer depuis l'IA
+                            </button>
+                            <HelpTip
+                                title="Importer, valider, refuser"
+                                detail="« Importer » copie la valeur de l'IA dans ton formulaire (colonne de droite). « Refuser » écarte sa proposition et garde la tienne. Rien n'est enregistré tant que tu n'as pas cliqué sur Sauvegarder : c'est ta version relue qui devient la référence."
+                                eyebrow="Aide"
+                            />
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[280px] text-xs">
                                 <thead>
@@ -301,6 +343,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                         <th class="pb-1.5 font-normal">Champ</th>
                                         <th class="pb-1.5 font-normal">Toi</th>
                                         <th class="pb-1.5 font-normal">IA</th>
+                                        <th class="pb-1.5 font-normal"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -309,11 +352,36 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                         :key="f.key"
                                         class="border-t"
                                         style="border-color: var(--color-line)"
-                                        :style="{ color: f.agree ? 'var(--color-pine)' : 'var(--color-rust)' }"
+                                        :style="{
+                                            color: f.agree ? 'var(--color-pine)' : 'var(--color-rust)',
+                                            opacity: refused.has(f.key) ? 0.4 : 1,
+                                        }"
                                     >
                                         <td class="py-1 pr-2 font-mono" style="color: var(--color-stone)">{{ f.key }}</td>
                                         <td class="py-1 pr-2">{{ f.human || '—' }}</td>
-                                        <td class="py-1">{{ f.ai || '—' }}</td>
+                                        <td class="py-1 pr-2">{{ f.ai || '—' }}</td>
+                                        <td class="py-1 text-right whitespace-nowrap">
+                                            <template v-if="!f.agree">
+                                                <button
+                                                    type="button"
+                                                    class="font-medium transition-opacity hover:opacity-70"
+                                                    style="color: var(--color-klein)"
+                                                    title="Importer la valeur de l'IA dans le formulaire"
+                                                    @click="importField(f)"
+                                                >
+                                                    importer
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="ml-2 transition-opacity hover:opacity-70"
+                                                    style="color: var(--color-stone)"
+                                                    title="Refuser : garder ta valeur"
+                                                    @click="refuseField(f)"
+                                                >
+                                                    refuser
+                                                </button>
+                                            </template>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -542,8 +610,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-7 flex items-center gap-3">
-                    <button class="btn btn-primary" :disabled="form.processing" @click="save">
+                <div class="mt-7 flex flex-wrap items-center gap-3">
+                    <button class="btn btn-primary" :disabled="form.processing" @click="save(true)">
+                        Sauvegarder
+                    </button>
+                    <button v-if="nextId" class="btn btn-ghost" :disabled="form.processing" @click="save(false)">
                         Sauver &amp; suivant
                     </button>
                     <button v-if="nextId" class="btn btn-ghost" @click="skip">Passer</button>
