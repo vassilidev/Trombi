@@ -144,6 +144,7 @@ function applySuggestion(entry) {
 // L'humain relit ce que l'IA propose et l'adopte dans le formulaire, champ par
 // champ ou d'un bloc. Rien n'est enregistré tant qu'il n'a pas sauvegardé.
 const refused = ref(new Set());
+const imported = ref(new Set());
 
 function importField(f) {
     if (f.kind === 'age') {
@@ -155,9 +156,11 @@ function importField(f) {
         form[f.key] = f.ai_raw ?? null;
     }
     refused.value.delete(f.key);
+    imported.value = new Set(imported.value).add(f.key);
 }
 
 function refuseField(f) {
+    imported.value.delete(f.key);
     refused.value = new Set(refused.value).add(f.key);
 }
 
@@ -353,15 +356,44 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                         class="border-t"
                                         style="border-color: var(--color-line)"
                                         :style="{
-                                            color: f.agree ? 'var(--color-pine)' : 'var(--color-rust)',
+                                            color: imported.has(f.key)
+                                                ? 'var(--color-pine)'
+                                                : f.agree
+                                                  ? 'var(--color-pine)'
+                                                  : 'var(--color-rust)',
                                             opacity: refused.has(f.key) ? 0.4 : 1,
                                         }"
                                     >
                                         <td class="py-1 pr-2 font-mono" style="color: var(--color-stone)">{{ f.key }}</td>
                                         <td class="py-1 pr-2">{{ f.human || '—' }}</td>
-                                        <td class="py-1 pr-2">{{ f.ai || '—' }}</td>
+                                        <td
+                                            class="py-1 pr-2"
+                                            :style="{ fontWeight: imported.has(f.key) ? 600 : 400 }"
+                                        >
+                                            {{ f.ai || '—' }}
+                                        </td>
                                         <td class="py-1 text-right whitespace-nowrap">
-                                            <template v-if="!f.agree">
+                                            <span
+                                                v-if="imported.has(f.key)"
+                                                class="font-medium"
+                                                style="color: var(--color-pine)"
+                                                >importé ✓</span
+                                            >
+                                            <span
+                                                v-else-if="refused.has(f.key)"
+                                                class="transition-opacity"
+                                                style="color: var(--color-stone)"
+                                            >
+                                                refusé ·
+                                                <button
+                                                    type="button"
+                                                    class="underline transition-opacity hover:opacity-70"
+                                                    @click="importField(f)"
+                                                >
+                                                    importer
+                                                </button>
+                                            </span>
+                                            <template v-else-if="!f.agree">
                                                 <button
                                                     type="button"
                                                     class="font-medium transition-opacity hover:opacity-70"
