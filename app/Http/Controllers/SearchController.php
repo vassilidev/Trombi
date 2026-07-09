@@ -88,6 +88,8 @@ class SearchController extends Controller
                 'is_analyzed' => $talent->appearance !== null,
                 'description' => $talent->profile?->description_fr,
                 'score' => $result['similarite'],
+                'matched' => $result['matched'] ?? [],
+                'missed' => $result['missed'] ?? [],
             ];
         }
 

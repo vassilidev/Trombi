@@ -113,7 +113,7 @@ function filterChips(filters) {
                     </span>
                     <HelpTip
                         title="Comment lire le score"
-                        detail="Les critères durs (genre, âge…) sont déjà filtrés exactement en amont. Le pourcentage mesure la PROXIMITÉ SÉMANTIQUE entre ta demande et le portrait du profil (allure, style) — via l'angle entre leurs vecteurs. Il atteint rarement 100 % car il compare du sens, pas des mots identiques : 40–70 % est déjà une très bonne correspondance. Clique un profil pour l'ouvrir."
+                        detail="Le pourcentage = la part de TES critères que le profil satisfait (genre, cheveux, âge, vibe…). Tout satisfait = 100 %. Les puces ✓ montrent ce qui correspond, ✗ ce qui a été relâché pour ne pas te laisser sans résultat. À couverture égale, les profils sont départagés par proximité sémantique (le vecteur). Clique un profil pour l'ouvrir."
                         eyebrow="Score"
                     />
                 </span>
@@ -158,11 +158,30 @@ function filterChips(filters) {
                             </span>
                             <span
                                 class="shrink-0 font-mono text-sm font-bold tabular-nums"
-                                :title="`Proximité sémantique : ${Math.round(r.score * 100)}%`"
-                                style="color: var(--color-klein)"
+                                :title="`Correspondance à tes critères : ${Math.round(r.score * 100)}%`"
+                                :style="{ color: r.score >= 0.999 ? 'var(--color-pine)' : 'var(--color-klein)' }"
                                 >{{ Math.round(r.score * 100) }}%</span
                             >
                         </div>
+
+                        <!-- Critères correspondants / manquants (explication du score) -->
+                        <div v-if="(r.matched && r.matched.length) || (r.missed && r.missed.length)" class="mt-1.5 flex flex-wrap gap-1">
+                            <span
+                                v-for="m in r.matched"
+                                :key="'ok-' + m"
+                                class="tag"
+                                style="background: var(--color-klein-wash); color: var(--color-pine)"
+                                >✓ {{ m }}</span
+                            >
+                            <span
+                                v-for="m in r.missed"
+                                :key="'no-' + m"
+                                class="tag"
+                                style="background: var(--color-paper-deep); color: var(--color-stone-soft)"
+                                >✗ {{ m }}</span
+                            >
+                        </div>
+
                         <p class="mt-1.5 text-sm leading-relaxed" style="color: var(--color-ink)">
                             {{ r.description || 'Pas encore de description.' }}
                         </p>

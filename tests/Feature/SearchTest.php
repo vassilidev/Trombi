@@ -40,6 +40,17 @@ it('applies the hard filter then vector ranking', function () {
         ->and($outcome['relaxed'])->toBeFalse();
 });
 
+it('scores a fully-matching profile at 100% (criteria coverage)', function () {
+    fakeOpenRouter(['genre' => 'femme', 'semantic_text' => 'douce']);
+    $femme = searchableTalent(['genre' => 'femme', 'cheveux_couleur' => 'brun']);
+
+    $outcome = app(SearchService::class)->search('une femme');
+    $top = collect($outcome['results'])->firstWhere('talent_id', $femme->id);
+
+    expect($top['similarite'])->toBe(1.0)          // tous les critères satisfaits
+        ->and($top['matched'])->toContain('Genre perçu');
+});
+
 it('logs the brief and its matches', function () {
     fakeOpenRouter(['genre' => 'femme', 'semantic_text' => 'douce']);
     searchableTalent(['genre' => 'femme']);

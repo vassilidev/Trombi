@@ -3,7 +3,9 @@
 namespace App\Services\Search;
 
 use App\Models\Brief;
+use App\Models\TalentAppearance;
 use App\Services\OpenRouter\OpenRouterClient;
+use App\Support\Taxonomy;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,7 @@ class SearchService
     public function __construct(
         private readonly QueryParserService $parser,
         private readonly OpenRouterClient $client,
+        private readonly RelevanceScorer $scorer,
     ) {}
 
     /**
@@ -42,7 +45,10 @@ class SearchService
         $vector = $this->client->embed($semantic);
         $literal = $this->vectorLiteral($vector);
 
-        [$results, $relaxed] = $this->rankWithFallback($filters, $literal, $limit);
+        // On sur-échantillonne (pré-filtre + cosinus) puis on rerank par couverture
+        // des critères, et on ne garde que les meilleurs.
+        [$pool, $relaxed] = $this->rankWithFallback($filters, $literal, $limit * 4);
+        $results = array_slice($this->rerank($pool, $filters), 0, $limit);
 
         $brief = $this->logBrief($query, $sourceKind, $filters, $literal, $results);
 
@@ -92,6 +98,53 @@ class SearchService
         }
 
         return [$last, count($tiers) > 1];
+    }
+
+    /**
+     * Reranking explicable : score = part des critères demandés que le profil
+     * satisfait (départage au cosinus). Trie du plus pertinent au moins pertinent.
+     *
+     * @param  list<array{talent_id: int, similarite: float}>  $pool
+     * @return list<array{talent_id: int, similarite: float, cosine: float, matched: list<string>, missed: list<string>}>
+     */
+    private function rerank(array $pool, SearchFilters $filters): array
+    {
+        if ($pool === []) {
+            return [];
+        }
+
+        $ids = array_column($pool, 'talent_id');
+
+        $appearances = TalentAppearance::whereIn('talent_id', $ids)->get()->keyBy('talent_id');
+
+        $tagsByTalent = DB::table('talent_tag as tt')
+            ->join('tags as t', 't.id', '=', 'tt.tag_id')
+            ->whereIn('tt.talent_id', $ids)
+            ->get(['tt.talent_id', 't.slug'])
+            ->groupBy('talent_id')
+            ->map(fn ($rows) => $rows->pluck('slug')->all());
+
+        $scored = [];
+        foreach ($pool as $candidate) {
+            $id = $candidate['talent_id'];
+            $attrs = $appearances->get($id)?->only([
+                ...array_keys(Taxonomy::singleAttributes()), 'age_min', 'age_max',
+            ]) ?? [];
+
+            $result = $this->scorer->score($filters, $attrs, $tagsByTalent->get($id, []), $candidate['similarite']);
+
+            $scored[] = [
+                'talent_id' => $id,
+                'similarite' => $result['score'],
+                'cosine' => $result['cosine'],
+                'matched' => $result['matched'],
+                'missed' => $result['missed'],
+            ];
+        }
+
+        usort($scored, fn (array $a, array $b): int => [$b['similarite'], $b['cosine']] <=> [$a['similarite'], $a['cosine']]);
+
+        return $scored;
     }
 
     /**
