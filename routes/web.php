@@ -3,9 +3,11 @@
 use App\Http\Controllers\BenchmarkController;
 use App\Http\Controllers\CalibrationController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\LabController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TalentController;
+use App\Http\Controllers\UsageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SearchController::class, 'index'])->name('search');
@@ -33,3 +35,6 @@ Route::post('/calibration/analyze-gold', [CalibrationController::class, 'analyze
 Route::get('/benchmark', [BenchmarkController::class, 'index'])->name('benchmark.index');
 Route::post('/benchmark/run', [BenchmarkController::class, 'run'])->name('benchmark.run');
 Route::get('/benchmark/{benchmark}', [BenchmarkController::class, 'show'])->name('benchmark.show');
+
+Route::get('/labo', [LabController::class, 'index'])->name('lab.index');
+Route::get('/usage', [UsageController::class, 'index'])->name('usage.index');

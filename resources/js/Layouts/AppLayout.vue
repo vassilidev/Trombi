@@ -11,6 +11,8 @@ const nav = [
     { label: 'Talents', href: '/talents' },
     { label: 'Calibration', href: '/calibration' },
     { label: 'Benchmark', href: '/benchmark' },
+    { label: 'Labo', href: '/labo' },
+    { label: 'Usage', href: '/usage' },
     { label: 'Prompts', href: '/prompts' },
 ];
 

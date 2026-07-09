@@ -78,6 +78,40 @@ class OpenRouterClient
     }
 
     /**
+     * Crédits du compte OpenRouter : total acheté, consommé, restant (USD).
+     * Retourne null si l'API est indisponible ou la clé absente.
+     *
+     * @return array{total: float, used: float, remaining: float}|null
+     */
+    public function credits(): ?array
+    {
+        if (blank($this->apiKey)) {
+            return null;
+        }
+
+        try {
+            $response = $this->request()->get('/credits');
+            $response->throw();
+            $data = $response->json('data');
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! is_array($data)) {
+            return null;
+        }
+
+        $total = (float) ($data['total_credits'] ?? 0);
+        $used = (float) ($data['total_usage'] ?? 0);
+
+        return [
+            'total' => round($total, 4),
+            'used' => round($used, 4),
+            'remaining' => round($total - $used, 4),
+        ];
+    }
+
+    /**
      * Construit un message utilisateur combinant du texte et une image (data URI).
      *
      * @return array<string, mixed>
