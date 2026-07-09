@@ -341,7 +341,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                         <div class="mb-2 flex items-center justify-between">
                             <span class="font-mono text-[11px]" style="color: var(--color-stone)">{{ diff.model }}</span>
                             <span class="text-xs font-semibold">
-                                Accord {{ Math.round(diff.overall * 100) }}%
+                                <template v-if="diff.has_human">Accord {{ Math.round(diff.overall * 100) }}%</template>
+                                <template v-else>À importer / refuser</template>
                             </span>
                         </div>
                         <div class="mb-2 flex items-center gap-2">

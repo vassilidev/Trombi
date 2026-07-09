@@ -2,12 +2,32 @@
 
 use App\Jobs\AnalyzeTalentJob;
 use App\Models\Talent;
+use App\Services\Annotation\TalentAnnotationService;
 use Database\Seeders\TagSeeder;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->seed(TagSeeder::class);
     Queue::fake();
+});
+
+it('shows the AI diff to import instead of pre-filling an unqualified talent', function () {
+    $talent = Talent::factory()->create();
+
+    app(TalentAnnotationService::class)->record(
+        talent: $talent,
+        payload: ['genre' => 'homme', 'cheveux_couleur' => 'brun', 'vibe' => ['naturel']],
+        source: 'ai',
+        annotator: 'openai/gpt-4o',
+        model: 'openai/gpt-4o',
+    );
+
+    $this->get("/talents/{$talent->id}/qualify")->assertInertia(
+        fn ($page) => $page
+            ->where('values', [])                       // formulaire NON pré-rempli
+            ->where('diff.has_human', false)            // rien de validé encore
+            ->where('diff.fields.0.ai', 'homme'),       // l'IA est proposée à l'import
+    );
 });
 
 it('queues the embedding so the talent becomes searchable', function () {

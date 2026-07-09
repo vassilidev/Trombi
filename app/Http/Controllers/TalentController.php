@@ -315,18 +315,21 @@ class TalentController extends Controller
         $human = $talent->annotations->where('source', 'human')->sortByDesc('id')->first();
         $ai = $talent->annotations->where('source', 'ai')->sortByDesc('id')->first();
 
-        if ($human === null || $ai === null) {
+        // On montre le diff dès qu'il y a une analyse IA, même sans validation
+        // humaine : l'opérateur importe/refuse au lieu de tout voir pré-rempli.
+        if ($ai === null) {
             return null;
         }
 
-        $comparison = $this->scorer->compare($human->payload, $ai->payload);
+        $humanPayload = $human?->payload ?? [];
+        $comparison = $this->scorer->compare($humanPayload, $ai->payload);
         $fields = [];
 
         foreach (array_keys(Taxonomy::singleAttributes()) as $field) {
             $fields[] = [
                 'key' => $field,
                 'kind' => 'single',
-                'human' => $human->payload[$field] ?? null,
+                'human' => $humanPayload[$field] ?? null,
                 'ai' => $ai->payload[$field] ?? null,
                 'ai_raw' => $ai->payload[$field] ?? null,
                 'agree' => $comparison['per_field'][$field],
@@ -336,7 +339,7 @@ class TalentController extends Controller
         $fields[] = [
             'key' => 'age',
             'kind' => 'age',
-            'human' => $this->ageLabel($human->payload),
+            'human' => $this->ageLabel($humanPayload),
             'ai' => $this->ageLabel($ai->payload),
             'ai_raw' => [
                 'age_min' => $ai->payload['age_min'] ?? null,
@@ -349,7 +352,7 @@ class TalentController extends Controller
             $fields[] = [
                 'key' => $field,
                 'kind' => 'multi',
-                'human' => implode(', ', $human->payload[$field] ?? []),
+                'human' => implode(', ', $humanPayload[$field] ?? []),
                 'ai' => implode(', ', $ai->payload[$field] ?? []),
                 'ai_raw' => array_values($ai->payload[$field] ?? []),
                 'agree' => $comparison['per_field'][$field],
@@ -359,6 +362,7 @@ class TalentController extends Controller
         return [
             'model' => $ai->annotator,
             'overall' => $comparison['overall'],
+            'has_human' => $human !== null,
             'fields' => $fields,
         ];
     }
@@ -375,7 +379,8 @@ class TalentController extends Controller
     }
 
     /**
-     * Valeurs pré-remplies : dernière annotation humaine, sinon l'appearance.
+     * Valeurs pré-remplies : UNIQUEMENT la dernière annotation humaine. On ne
+     * pré-remplit jamais avec l'IA — ses valeurs passent par le diff (import/refus).
      *
      * @return array<string, mixed>
      */
@@ -386,27 +391,7 @@ class TalentController extends Controller
             ->latest('id')
             ->first();
 
-        if ($human !== null) {
-            return $human->payload;
-        }
-
-        $appearance = $talent->appearance;
-        $values = [];
-
-        if ($appearance !== null) {
-            foreach (array_keys(Taxonomy::singleAttributes()) as $field) {
-                $values[$field] = $appearance->{$field};
-            }
-            $values['age_min'] = $appearance->age_min;
-            $values['age_max'] = $appearance->age_max;
-        }
-
-        $tagSlugs = $talent->tags->pluck('slug');
-        foreach (Taxonomy::multiAttributes() as $field => $enum) {
-            $values[$field] = $tagSlugs->intersect($enum::values())->values()->all();
-        }
-
-        return $values;
+        return $human?->payload ?? [];
     }
 
     /**
