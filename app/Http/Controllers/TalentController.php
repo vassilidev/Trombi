@@ -277,11 +277,15 @@ class TalentController extends Controller
             annotator: 'humain',
         );
 
-        // « Sauvegarder » (sans passer au suivant) : on reste sur la fiche.
+        // « Sauvegarder » ou import IA : on reste sur la fiche.
         if ($request->boolean('stay')) {
+            $message = $request->filled('note')
+                ? $request->string('note')->toString()
+                : "{$talent->code} qualifié.";
+
             return redirect()
                 ->route('talents.qualify', $talent)
-                ->with('flash', ['message' => "{$talent->code} qualifié."]);
+                ->with('flash', ['message' => $message]);
         }
 
         $next = $this->nextToQualify($talent);

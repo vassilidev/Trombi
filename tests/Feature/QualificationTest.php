@@ -64,3 +64,19 @@ it('stays on the same talent when saving with stay', function () {
     expect($first->is_gold)->toBeTrue()
         ->and($first->annotations->firstWhere('source', 'human')->annotator)->toBe('humain');
 });
+
+it('persists an AI import immediately and flashes the note', function () {
+    $talent = Talent::factory()->create();
+
+    $this->post("/talents/{$talent->id}/qualify", [
+        'cheveux_couleur' => 'brun',
+        'stay' => true,
+        'note' => '« cheveux_couleur » importé de l’IA.',
+    ])
+        ->assertRedirect("/talents/{$talent->id}/qualify")
+        ->assertSessionHas('flash.message', '« cheveux_couleur » importé de l’IA.');
+
+    $talent->refresh()->load('appearance');
+
+    expect($talent->appearance->cheveux_couleur)->toBe('brun');
+});

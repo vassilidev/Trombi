@@ -141,12 +141,12 @@ function applySuggestion(entry) {
 }
 
 // --- Import des valeurs détectées par l'IA ---
-// L'humain relit ce que l'IA propose et l'adopte dans le formulaire, champ par
-// champ ou d'un bloc. Rien n'est enregistré tant qu'il n'a pas sauvegardé.
+// L'humain adopte ce que l'IA propose : chaque import est enregistré aussitôt
+// (le champ passe dans ton annotation humaine, qui fait référence).
 const refused = ref(new Set());
 const imported = ref(new Set());
 
-function importField(f) {
+function applyField(f) {
     if (f.kind === 'age') {
         form.age_min = f.ai_raw?.age_min ?? null;
         form.age_max = f.ai_raw?.age_max ?? null;
@@ -159,18 +159,32 @@ function importField(f) {
     imported.value = new Set(imported.value).add(f.key);
 }
 
+function importField(f) {
+    applyField(f);
+    persist(`« ${f.key} » importé de l’IA.`);
+}
+
+function importAll() {
+    const fields = (props.diff?.fields ?? []).filter((f) => !f.agree && !refused.value.has(f.key));
+    if (!fields.length) return;
+    fields.forEach(applyField);
+    persist(`${fields.length} champ(s) importé(s) de l’IA.`);
+}
+
 function refuseField(f) {
     imported.value.delete(f.key);
     refused.value = new Set(refused.value).add(f.key);
 }
 
-function importAll() {
-    (props.diff?.fields ?? []).forEach((f) => {
-        if (!refused.value.has(f.key)) importField(f);
+// --- Sauvegarde ---
+// Enregistre le formulaire courant. `stay` reste sur la fiche ; `note` sert de
+// message flash pour les imports auto.
+function persist(note) {
+    form.transform((data) => ({ ...data, stay: true, note })).post(`/talents/${props.talent.id}/qualify`, {
+        preserveScroll: true,
     });
 }
 
-// --- Sauvegarde ---
 function save(stay = false) {
     form.transform((data) => ({ ...data, stay })).post(`/talents/${props.talent.id}/qualify`);
 }
@@ -329,13 +343,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                 type="button"
                                 class="btn btn-ghost"
                                 style="padding: 0.35rem 0.7rem; font-size: 0.6875rem"
+                                :disabled="form.processing"
                                 @click="importAll"
                             >
                                 Tout importer depuis l'IA
                             </button>
                             <HelpTip
-                                title="Importer, valider, refuser"
-                                detail="« Importer » copie la valeur de l'IA dans ton formulaire (colonne de droite). « Refuser » écarte sa proposition et garde la tienne. Rien n'est enregistré tant que tu n'as pas cliqué sur Sauvegarder : c'est ta version relue qui devient la référence."
+                                title="Importer, refuser"
+                                detail="« Importer » adopte la valeur de l'IA : elle passe dans ton formulaire et est enregistrée aussitôt (ta version fait référence). « Refuser » écarte sa proposition et garde la tienne."
                                 eyebrow="Aide"
                             />
                         </div>
@@ -396,9 +411,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey));
                                             <template v-else-if="!f.agree">
                                                 <button
                                                     type="button"
-                                                    class="font-medium transition-opacity hover:opacity-70"
+                                                    class="font-medium transition-opacity hover:opacity-70 disabled:opacity-40"
                                                     style="color: var(--color-klein)"
-                                                    title="Importer la valeur de l'IA dans le formulaire"
+                                                    title="Importer la valeur de l'IA et l'enregistrer"
+                                                    :disabled="form.processing"
                                                     @click="importField(f)"
                                                 >
                                                     importer
